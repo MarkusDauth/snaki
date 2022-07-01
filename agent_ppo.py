@@ -3,8 +3,19 @@ import random
 import numpy as np
 from collections import deque
 from snake_gameai import SnakeGameAI,Direction,Point,BLOCK_SIZE
-from model import Linear_QNet,QTrainer
+from model_qlearning import Linear_QNet,QTrainer
 from Helper import plot
+
+
+import gym
+import time
+
+import numpy as np
+import time
+import torch.nn as nn
+from torch.optim import Adam
+from torch.distributions import MultivariateNormal
+
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
@@ -22,7 +33,6 @@ class Agent:
         # self.model.to('cuda')   
         # for n,p in self.model.named_parameters():
         #     print(p.device,'',n)         
-        # TODO: model,trainer
 
     # state (11 Values)
     #[ danger straight, danger right, danger left,
@@ -108,8 +118,11 @@ class Agent:
 def train():
     plot_scores = []
     plot_mean_scores = []
+    plot_mean_every_n_scores = []
     total_score = 0
     record = 0
+    mean_every_n_score = 0
+    mean_every_n_score_helper = 0
     agent = Agent()
     game = SnakeGameAI()
     while True:
@@ -135,17 +148,25 @@ def train():
             agent.n_game += 1
             agent.train_long_memory()
             
-            # TODO FIX?
-            if(score > reward): # new High score 
-                reward = score
-                agent.model.save()
+            # new High score 
+            if(score > record): 
+                record = score
             print('Game:',agent.n_game,'Score:',score,'Record:',record)
+            agent.model.save()
             
             plot_scores.append(score)
             total_score+=score
             mean_score = total_score / agent.n_game
+            
+            # mean every 20 games
+            mean_every_n_score_helper = mean_every_n_score_helper + score
+            if(agent.n_game % 20 == 0):
+                mean_every_n_score = mean_every_n_score_helper / 20
+                mean_every_n_score_helper = 0
+            plot_mean_every_n_scores.append(mean_every_n_score)
+
             plot_mean_scores.append(mean_score)
-            plot(plot_scores,plot_mean_scores)
+            plot(plot_scores,plot_mean_scores,plot_mean_every_n_scores)
 
 
 if(__name__=="__main__"):

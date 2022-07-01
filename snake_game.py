@@ -22,8 +22,9 @@ class Direction(Enum):
  
 Point = namedtuple('Point','x , y')
 
-BLOCK_SIZE=20
-SPEED = 20
+FIELD_SIZE = 10 # must be even and larger than 5
+BLOCK_SIZE = 20
+SPEED = 2
 WHITE = (255,255,255)
 RED = (200,0,0)
 BLUE1 = (0,0,255)
@@ -31,7 +32,7 @@ BLUE2 = (0,100,255)
 BLACK = (0,0,0)
 
 class SnakeGame:
-    def __init__(self,w=640,h=480):
+    def __init__(self,w=BLOCK_SIZE*FIELD_SIZE,h=BLOCK_SIZE*FIELD_SIZE):
         self.w=w
         self.h=h
         #init display

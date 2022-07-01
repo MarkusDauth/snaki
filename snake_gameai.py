@@ -24,6 +24,8 @@ class Direction(Enum):
  
 Point = namedtuple('Point','x , y')
 
+FIELD_SIZE = 10 # must be even and larger than 5
+
 BLOCK_SIZE=20
 SPEED = 40
 WHITE = (255,255,255)
@@ -33,7 +35,7 @@ BLUE2 = (0,100,255)
 BLACK = (0,0,0)
 
 class SnakeGameAI:
-    def __init__(self,w=640,h=480):
+    def __init__(self,w=BLOCK_SIZE*FIELD_SIZE,h=BLOCK_SIZE*FIELD_SIZE):
         self.w=w
         self.h=h
         #init display
@@ -91,10 +93,11 @@ class SnakeGameAI:
         else:
             self.snake.pop()
         
-        # 5. Update UI and clock
-        # self._update_ui()
-        # self.clock.tick(SPEED)
-        # 6. Return game Over and Display Score
+        #5. Update UI and clock
+        self._update_ui()
+        self.clock.tick(SPEED)
+        
+        #6. Return game Over and Display Score
         
         return reward,game_over,self.score
 
