@@ -2,7 +2,7 @@ import torch
 import random 
 import numpy as np
 from collections import deque
-from snake_gameai import SnakeGameAI,Direction,Point,BLOCK_SIZE
+from snake_game_ai import SnakeGameAI,Direction,Point,BLOCK_SIZE
 from model_qlearning import Linear_QNet,QTrainer
 from Helper import plot
 

@@ -9,7 +9,7 @@ This repository is based on the code from https://github.com/vedantgoswami/Snake
     conda install IPython
 
 ## Instructions (copied from website)
-To run this game first create an environment in the anaconda prompt or (any platform). Then install the necessary modules such as Pytorch(for DQ Learning Model), Pygame (for visuals of the game), and other basic modules.
+To run this game first create an environment in the anaconda prompt or (any platform). Then install the necessary modules such as Pytorch (for DQ Learning Model), Pygame (for visuals of the game), and other basic modules.
 
 Then run the agent.py file in the environment just created and then the training will start, and you will see the following two GUI one for the training progress and the other for the snake game driven by AI.
 
