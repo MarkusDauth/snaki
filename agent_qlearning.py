@@ -2,7 +2,6 @@ import torch
 import random 
 import numpy as np
 from collections import deque
-from snake_game_ai import SnakeGameAI,Direction,Point,BLOCK_SIZE
 from model_qlearning import Linear_QNet,QTrainer
 
 
@@ -13,7 +12,6 @@ import parameters
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
-LR = 0.001
 
 class Agent_QLearning:
     def __init__(self):
@@ -21,7 +19,7 @@ class Agent_QLearning:
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
         self.model = Linear_QNet(11,256,3) 
-        self.trainer = QTrainer(self.model,lr=LR,gamma=self.gamma)    
+        self.trainer = QTrainer(self.model,lr=self.params['learning_rate'] ,gamma=self.gamma)    
 
     def _remember(self,state,action,reward,next_state,done):
         self.memory.append((state,action,reward,next_state,done)) # popleft if memory exceed

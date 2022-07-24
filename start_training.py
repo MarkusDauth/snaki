@@ -3,9 +3,10 @@ from agent_manhattan import Agent_Manhattan
 from snake_world_env import Snake_World_Env
 import parameters
 import time
-from Helper import plot
 import matplotlib.pyplot as plt 
 from IPython import display
+import sys
+from snake_game_ai import SnakeGameAI
 
 plt.ion()
 
@@ -16,9 +17,14 @@ class Training_Setup:
         if(self.params['method'] == 'qlearning'):
             self.agent = Agent_QLearning()
         elif(self.params['method'] == 'manhattan'):
-            self.agent = Agent_Manhattan()
+            if (self.params['train']):
+                print('error: manhattan can not be trained')
+                sys.exit()
+            else:
+                self.agent = Agent_Manhattan()
         else:
             print('wrong parameter: method')
+            sys.exit()
 
     def start_training(self):
         self.counter_games = 0
@@ -30,7 +36,8 @@ class Training_Setup:
         record = 0
         mean_every_n_score = 0 # used for running average
         mean_every_n_score_helper = 0 # used for running average
-        world = Snake_World_Env()
+        game = SnakeGameAI()
+        world_env = Snake_World_Env(game)
         start_time = time.time()
 
         if(self.params['train']):
@@ -43,9 +50,9 @@ class Training_Setup:
         while (self.counter_games < max_episodes):
             # Episode start
             if(self.params['train']):
-                reward, done, score = self.agent.train_step(world, self.counter_games) # Agent does one step
+                reward, done, score = self.agent.train_step(world_env, self.counter_games) # Agent does one step
             else:
-                reward, done, score = self.agent.test_step(world) # Agent does one step
+                reward, done, score = self.agent.test_step(world_env) # Agent does one step
 
             self.counter_steps += 1
             if (done):
@@ -72,7 +79,7 @@ class Training_Setup:
                 episode_end_time = time.time()
                 episode_run_time = episode_end_time - start_time
 
-                print(f'Game:{self.counter_games}\t\tScore:{score}\t\ttavg_score:{mean_score:.2f}\tRecord:{record}\tReward:{reward}\ttime:{episode_run_time:.2f}')
+                print(f'Game: {self.counter_games}\t\tScore: {score}\t\ttavg_score: {mean_score:.2f}\tRecord: {record}\tReward: {reward}\ttime: {episode_run_time:.2f}')
 
         # done training
         self.plot(plot_scores,plot_mean_scores,plot_mean_every_n_scores)

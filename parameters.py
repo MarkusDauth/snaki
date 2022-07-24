@@ -3,17 +3,19 @@ def init_parameters():
 
     # Training and test
     params['method'] = 'qlearning' # 'qlearning' | 'manhattan'
-    params['train_episodes'] = 3 # episodes for training
     params['train'] = True # false = test run, which does not change NN
-    params['show_gui'] = True 
+    params['show_gui'] = False
+
+    # Hyperparameter
+    params['train_episodes'] = 5000 # episodes for training
+    params['learning_rate'] = 0.001
 
     # not often changed
-    params['test_episodes'] = 300
+    params['test_episodes'] = 1000
     params['epsilon_decay_linear'] = 1.0/params['train_episodes']
+ 
     
     '''
-    
-
     # Neural Network
     params['learning_rate'] = 0.00013629
     params['first_layer_size'] = 200    # neurons in the first layer

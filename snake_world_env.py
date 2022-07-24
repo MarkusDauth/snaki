@@ -4,9 +4,14 @@ from enum import Enum
 
 
 class Snake_World_Env:
-    game = SnakeGameAI()
-    def __init__(self):
+    
+    def __init__(self, game):
+        self.game = game
         self.reset()        
+
+    def get_game(self):
+        'this is needed for manhattan'
+        return self.game
 
     # state (11 Values)
     #[ danger straight, danger right, danger left,
@@ -59,6 +64,7 @@ class Snake_World_Env:
             self.game.food.y < self.game.head.y, # food is up
             self.game.food.y > self.game.head.y  # food is down
         ]
+
         return np.array(state,dtype=int)
 
     def play_step(self,action):
