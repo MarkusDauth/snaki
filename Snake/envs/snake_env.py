@@ -1,13 +1,18 @@
 from snake_game_ai import SnakeGameAI,Direction,Point,BLOCK_SIZE,Direction
 import numpy as np
 from enum import Enum
+import gym
+from gym import spaces
 
-
-class Snake_World_Env:
+class SnakeEnv(gym.Env):
+    metadata = {"render_modes": ["human"]}
     
-    def __init__(self, game):
-        self.game = game
-        self.reset()        
+    def __init__(self):
+        self.game = SnakeGameAI()
+        self.reset()
+        
+        self.observation_space = spaces.MultiBinary(11)
+        self.action_space = spaces.Discrete(3)
 
     def get_game(self):
         'this is needed for manhattan'
@@ -67,7 +72,7 @@ class Snake_World_Env:
 
         return np.array(state,dtype=int)
 
-    def play_step(self,action):
+    def step(self,action):
         # Action
         # [1,0,0] -> Straight
         # [0,1,0] -> Right Turn 
@@ -95,7 +100,13 @@ class Snake_World_Env:
         if (ate_apple):
             reward += 1
 
-        return reward, done, score
+        observation = self.get_state()
+        
+        #TODO: info
+        info = {'score':score}
+        return observation, reward, done, info
     
     def reset(self):
         self.game.reset()
+        return self.get_state()
+

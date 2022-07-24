@@ -1,12 +1,12 @@
+from Snake.envs.snake_env import SnakeEnv
 from agent_qlearning import Agent_QLearning
 from agent_manhattan import Agent_Manhattan
-from snake_world_env import Snake_World_Env
 import parameters
 import time
 import matplotlib.pyplot as plt 
 from IPython import display
 import sys
-from snake_game_ai import SnakeGameAI
+from agent_ppo import Agent_PPO 
 
 plt.ion()
 
@@ -16,6 +16,8 @@ class Training_Setup:
 
         if(self.params['method'] == 'qlearning'):
             self.agent = Agent_QLearning()
+        elif(self.params['method'] == 'ppo'):
+            self.agent = Agent_PPO()
         elif(self.params['method'] == 'manhattan'):
             if (self.params['train']):
                 print('error: manhattan can not be trained')
@@ -36,8 +38,8 @@ class Training_Setup:
         record = 0
         mean_every_n_score = 0 # used for running average
         mean_every_n_score_helper = 0 # used for running average
-        game = SnakeGameAI()
-        world_env = Snake_World_Env(game)
+
+        world_env = SnakeEnv()
         start_time = time.time()
 
         if(self.params['train']):

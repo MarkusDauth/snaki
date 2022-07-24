@@ -82,7 +82,7 @@ class SnakeGameAI:
         # 3. Check if game Over
         ate_apple = False
         game_over = False 
-        if(self.is_collision() or self.frame_iteration > 100*len(self.snake) ):
+        if(self.is_collision() or self.frame_iteration > 100*(len(self.snake)-2) ):
             game_over=True
             return ate_apple, game_over,self.score
         # 4. Place new Food or just move

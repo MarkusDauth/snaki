@@ -6,7 +6,7 @@ from model_qlearning import Linear_QNet,QTrainer
 
 
 # added by Markus
-from snake_world_env import Snake_World_Env
+from Snake.envs.snake_env import SnakeEnv
 import parameters
 
 
@@ -66,8 +66,8 @@ class Agent_QLearning:
         final_move = self._get_train_action(state_old, counter_games)
 
         # perform move and get new state
-        reward, done, score = world_env.play_step(final_move)
-        state_new = world_env.get_state()
+        state_new, reward, done, info = world_env.step(final_move)
+        score = info['score']
 
         # train short memory
         self._train_short_memory(state_old,final_move,reward,state_new,done)
@@ -85,7 +85,10 @@ class Agent_QLearning:
     def test_step(self, world_env):
         state_old = world_env.get_state()
         final_move = self._get_test_action(state_old)
-        reward, done, score = world_env.play_step(final_move)
+
+        observation, reward, done, info = world_env.step(final_move)
+        score = info['score']
+
         if(done):
             world_env.reset()
         return reward, done, score

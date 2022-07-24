@@ -2,12 +2,12 @@ def init_parameters():
     params = dict()
 
     # Training and test
-    params['method'] = 'qlearning' # 'qlearning' | 'manhattan'
+    params['method'] = 'ppo' # 'qlearning' | 'manhattan'
     params['train'] = True # false = test run, which does not change NN
-    params['show_gui'] = False
+    params['show_gui'] = True
 
     # Hyperparameter
-    params['train_episodes'] = 5000 # episodes for training
+    params['train_episodes'] = 10 # episodes for training
     params['learning_rate'] = 0.001
 
     # not often changed

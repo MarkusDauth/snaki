@@ -18,6 +18,11 @@ This repository is based on the code from https://github.com/vedantgoswami/Snake
 
     pip install pygame matplotlib IPython
 
+1. Install ppo requirements
+
+    pip install stable-baselines3
+    pip install -e ./envs
+
 # How to run
 Run the agent.py file in the environment just created and then the training will start, and you will see the following two GUI one for the training progress and the other for the snake game driven by AI.
 
