@@ -5,8 +5,6 @@ from collections import namedtuple
 import numpy as np
 import math
 pygame.init()
-
-#font = pygame.font.Font('arial.ttf',25)
 font = pygame.font.SysFont('arial.ttf',25)
 
 # Reset 
@@ -24,8 +22,6 @@ class Direction(Enum):
  
 Point = namedtuple('Point','x , y')
 
-FIELD_SIZE = 10 # must be even and larger than 5
-
 BLOCK_SIZE=20
 SPEED = 40
 WHITE = (255,255,255)
@@ -35,7 +31,7 @@ BLUE2 = (0,100,255)
 BLACK = (0,0,0)
 
 class SnakeGameAI:
-    def __init__(self,w=BLOCK_SIZE*FIELD_SIZE,h=BLOCK_SIZE*FIELD_SIZE):
+    def __init__(self,w=640,h=480):
         self.w=w
         self.h=h
         #init display
@@ -45,9 +41,8 @@ class SnakeGameAI:
         
         #init game state
         self.reset()
-
     def reset(self):
-        self.cardinal_direction = Direction.RIGHT
+        self.direction = Direction.RIGHT
         self.head = Point(self.w/2,self.h/2)
         self.snake = [self.head,
                       Point(self.head.x-BLOCK_SIZE,self.head.y),
@@ -66,7 +61,7 @@ class SnakeGameAI:
             self._place__food()
 
 
-    def play_step(self,cardinal_direction):
+    def play_step(self,action):
         self.frame_iteration+=1
         # 1. Collect the user input
         for event in pygame.event.get():
@@ -75,7 +70,7 @@ class SnakeGameAI:
                 quit()
             
         # 2. Move
-        self._move(cardinal_direction)
+        self._move(action)
         self.snake.insert(0,self.head)
 
         # 3. Check if game Over
@@ -94,11 +89,10 @@ class SnakeGameAI:
         else:
             self.snake.pop()
         
-        #5. Update UI and clock
+        # 5. Update UI and clock
         self._update_ui()
         self.clock.tick(SPEED)
-        
-        #6. Return game Over and Display Score
+        # 6. Return game Over and Display Score
         
         return reward,game_over,self.score
 
@@ -112,22 +106,35 @@ class SnakeGameAI:
         self.display.blit(text,[0,0])
         pygame.display.flip()
 
-    def _move(self, cardinal_direction):
-        self.cardinal_direction = cardinal_direction
+    def _move(self,action):
+        # Action
+        # [1,0,0] -> Straight
+        # [0,1,0] -> Right Turn 
+        # [0,0,1] -> Left Turn
+
+        clock_wise = [Direction.RIGHT,Direction.DOWN,Direction.LEFT,Direction.UP]
+        idx = clock_wise.index(self.direction)
+        if np.array_equal(action,[1,0,0]):
+            new_dir = clock_wise[idx]
+        elif np.array_equal(action,[0,1,0]):
+            next_idx = (idx + 1) % 4
+            new_dir = clock_wise[next_idx] # right Turn
+        else:
+            next_idx = (idx - 1) % 4
+            new_dir = clock_wise[next_idx] # Left Turn
+        self.direction = new_dir
 
         x = self.head.x
         y = self.head.y
-        if(self.cardinal_direction == Direction.RIGHT):
+        if(self.direction == Direction.RIGHT):
             x+=BLOCK_SIZE
-        elif(self.cardinal_direction == Direction.LEFT):
+        elif(self.direction == Direction.LEFT):
             x-=BLOCK_SIZE
-        elif(self.cardinal_direction == Direction.DOWN):
+        elif(self.direction == Direction.DOWN):
             y+=BLOCK_SIZE
-        elif(self.cardinal_direction == Direction.UP):
+        elif(self.direction == Direction.UP):
             y-=BLOCK_SIZE
         self.head = Point(x,y)
-
-        
 
     def is_collision(self,pt=None):
         if(pt is None):
@@ -138,6 +145,3 @@ class SnakeGameAI:
         if(pt in self.snake[1:]):
             return True
         return False
-
-    def get_cardinal_direction(self):
-        return self.cardinal_direction

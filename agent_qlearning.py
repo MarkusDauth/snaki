@@ -5,6 +5,11 @@ from collections import deque
 from snake_game_ai import SnakeGameAI,Direction,Point,BLOCK_SIZE
 from model_qlearning import Linear_QNet,QTrainer
 from Helper import plot
+
+# added by Markus
+from env_snake import World
+
+
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
@@ -22,59 +27,6 @@ class Agent:
         # self.model.to('cuda')   
         # for n,p in self.model.named_parameters():
         #     print(p.device,'',n)         
-
-    # state (11 Values)
-    #[ danger straight, danger right, danger left,
-    #   
-    # direction left, direction right,
-    # direction up, direction down
-    # 
-    # food left,food right,
-    # food up, food down]
-    def get_state(self,game):
-        head = game.snake[0]
-        point_l=Point(head.x - BLOCK_SIZE, head.y)
-        point_r=Point(head.x + BLOCK_SIZE, head.y)
-        point_u=Point(head.x, head.y - BLOCK_SIZE)
-        point_d=Point(head.x, head.y + BLOCK_SIZE)
-
-        dir_l = game.direction == Direction.LEFT
-        dir_r = game.direction == Direction.RIGHT
-        dir_u = game.direction == Direction.UP
-        dir_d = game.direction == Direction.DOWN
-
-        state = [
-            # Danger Straight
-            (dir_u and game.is_collision(point_u))or
-            (dir_d and game.is_collision(point_d))or
-            (dir_l and game.is_collision(point_l))or
-            (dir_r and game.is_collision(point_r)),
-
-            # Danger right
-            (dir_u and game.is_collision(point_r))or
-            (dir_d and game.is_collision(point_l))or
-            (dir_u and game.is_collision(point_u))or
-            (dir_d and game.is_collision(point_d)),
-
-            #Danger Left
-            (dir_u and game.is_collision(point_r))or
-            (dir_d and game.is_collision(point_l))or
-            (dir_r and game.is_collision(point_u))or
-            (dir_l and game.is_collision(point_d)),
-
-            # Move Direction
-            dir_l,
-            dir_r,
-            dir_u,
-            dir_d,
-
-            #Food Location
-            game.food.x < game.head.x, # food is in left
-            game.food.x > game.head.x, # food is in right
-            game.food.y < game.head.y, # food is up
-            game.food.y > game.head.y  # food is down
-        ]
-        return np.array(state,dtype=int)
 
     def remember(self,state,action,reward,next_state,done):
         self.memory.append((state,action,reward,next_state,done)) # popleft if memory exceed
@@ -113,17 +65,17 @@ def train():
     mean_every_n_score = 0
     mean_every_n_score_helper = 0
     agent = Agent()
-    game = SnakeGameAI()
+    world = World()
     while True:
         # Get Old state
-        state_old = agent.get_state(game)
+        state_old = world.get_state()
 
         # get move
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score = game.play_step(final_move)
-        state_new = agent.get_state(game)
+        reward, done, score = world.play_step(final_move)
+        state_new = world.get_state()
 
         # train short memory
         agent.train_short_memory(state_old,final_move,reward,state_new,done)
@@ -133,7 +85,7 @@ def train():
 
         if done:
             # Train long memory,plot result
-            game.reset()
+            world.reset()
             agent.n_game += 1
             agent.train_long_memory()
             
