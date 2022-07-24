@@ -4,34 +4,29 @@ import numpy as np
 from collections import deque
 from snake_game_ai import SnakeGameAI,Direction,Point,BLOCK_SIZE
 from model_qlearning import Linear_QNet,QTrainer
-from Helper import plot
+
 
 # added by Markus
-from env_snake import World
+from snake_world_env import Snake_World_Env
+import parameters
 
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
-class Agent:
+class Agent_QLearning:
     def __init__(self):
-        self.n_game = 0
-        self.epsilon = 0 # Randomness
+        self.params = parameters.init_parameters()
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
         self.model = Linear_QNet(11,256,3) 
-        self.trainer = QTrainer(self.model,lr=LR,gamma=self.gamma)
-        # for n,p in self.model.named_parameters():
-        #     print(p.device,'',n) 
-        # self.model.to('cuda')   
-        # for n,p in self.model.named_parameters():
-        #     print(p.device,'',n)         
+        self.trainer = QTrainer(self.model,lr=LR,gamma=self.gamma)    
 
-    def remember(self,state,action,reward,next_state,done):
+    def _remember(self,state,action,reward,next_state,done):
         self.memory.append((state,action,reward,next_state,done)) # popleft if memory exceed
 
-    def train_long_memory(self):
+    def _train_long_memory(self):
         if (len(self.memory) > BATCH_SIZE):
             mini_sample = random.sample(self.memory,BATCH_SIZE)
         else:
@@ -39,14 +34,15 @@ class Agent:
         states,actions,rewards,next_states,dones = zip(*mini_sample)
         self.trainer.train_step(states,actions,rewards,next_states,dones)
 
-    def train_short_memory(self,state,action,reward,next_state,done):
+    def _train_short_memory(self,state,action,reward,next_state,done):
         self.trainer.train_step(state,action,reward,next_state,done)
 
-    def get_action(self,state):
+    def _get_train_action(self,state, counter_games):
         # random moves: tradeoff explotation / exploitation
-        self.epsilon = 80 - self.n_game
+        # self.epsilon = 80 - self.n_game
+        self.epsilon = 1 - (counter_games * self.params['epsilon_decay_linear'])
         final_move = [0,0,0]
-        if(random.randint(0,200)<self.epsilon):
+        if random.uniform(0,1) < self.epsilon:
             move = random.randint(0,2)
             final_move[move]=1
         else:
@@ -56,59 +52,46 @@ class Agent:
             final_move[move]=1 
         return final_move
 
-def train():
-    plot_scores = []
-    plot_mean_scores = []
-    plot_mean_every_n_scores = []
-    total_score = 0
-    record = 0
-    mean_every_n_score = 0
-    mean_every_n_score_helper = 0
-    agent = Agent()
-    world = World()
-    while True:
+    def _get_test_action(self,state):
+        final_move = [0,0,0]
+        state0 = torch.tensor(state,dtype=torch.float).cuda()
+        prediction = self.model(state0).cuda() # prediction by model 
+        move = torch.argmax(prediction).item()
+        final_move[move]=1 
+        return final_move
+
+    def train_step(self, world_env, counter_games):
         # Get Old state
-        state_old = world.get_state()
+        state_old = world_env.get_state()
 
         # get move
-        final_move = agent.get_action(state_old)
+        final_move = self._get_train_action(state_old, counter_games)
 
         # perform move and get new state
-        reward, done, score = world.play_step(final_move)
-        state_new = world.get_state()
+        reward, done, score = world_env.play_step(final_move)
+        state_new = world_env.get_state()
 
         # train short memory
-        agent.train_short_memory(state_old,final_move,reward,state_new,done)
+        self._train_short_memory(state_old,final_move,reward,state_new,done)
 
-        #remember
-        agent.remember(state_old,final_move,reward,state_new,done)
+        #self
+        self._remember(state_old,final_move,reward,state_new,done)
 
-        if done:
-            # Train long memory,plot result
-            world.reset()
-            agent.n_game += 1
-            agent.train_long_memory()
+        if(done):
+            world_env.reset()
+            self._train_long_memory()
+            self.model.save()
             
-            # new High score 
-            if(score > record): 
-                record = score
-            print('Game:',agent.n_game,'Score:',score,'Record:',record)
-            agent.model.save()
-            
-            plot_scores.append(score)
-            total_score+=score
-            mean_score = total_score / agent.n_game
-            
-            # mean every 20 games
-            mean_every_n_score_helper = mean_every_n_score_helper + score
-            if(agent.n_game % 20 == 0):
-                mean_every_n_score = mean_every_n_score_helper / 20
-                mean_every_n_score_helper = 0
-            plot_mean_every_n_scores.append(mean_every_n_score)
+        return reward, done, score
 
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores,plot_mean_scores,plot_mean_every_n_scores)
+    def test_step(self, world_env):
+        state_old = world_env.get_state()
+        final_move = self._get_test_action(state_old)
+        reward, done, score = world_env.play_step(final_move)
+        if(done):
+            world_env.reset()
+        return reward, done, score
 
 
-if(__name__=="__main__"):
-    train()
+
+        

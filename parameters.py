@@ -1,9 +1,18 @@
-def define_parameters():
+def init_parameters():
     params = dict()
 
     # Training and test
-    params['episodes'] = 1000 # episodes for training OR test
-    params['train'] = False # false = training run, which does not change NN
+    params['method'] = 'qlearning' # 'qlearning' | 'manhattan'
+    params['train_episodes'] = 3 # episodes for training
+    params['train'] = True # false = test run, which does not change NN
+    params['show_gui'] = True 
+
+    # not often changed
+    params['test_episodes'] = 300
+    params['epsilon_decay_linear'] = 1.0/params['train_episodes']
+    
+    '''
+    
 
     # Neural Network
     params['learning_rate'] = 0.00013629
@@ -24,5 +33,6 @@ def define_parameters():
     params['display'] = False # Show GUI
     params['speed'] = 0 # Default = 50; fastest = 0
     params['bayesianopt'] = False
+    '''
 
     return params

@@ -9,19 +9,13 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
-class Agent:
+class Agent_Manhattan:
     def __init__(self):
         self.n_game = 0
-        self.epsilon = 0 # Randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
         self.model = Linear_QNet(11,256,3) 
         self.trainer = QTrainer(self.model,lr=LR,gamma=self.gamma)
-        # for n,p in self.model.named_parameters():
-        #     print(p.device,'',n) 
-        # self.model.to('cuda')   
-        # for n,p in self.model.named_parameters():
-        #     print(p.device,'',n)         
 
     # state (11 Values)
     #[ danger straight, danger right, danger left,
@@ -107,6 +101,7 @@ class Agent:
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
 
+        '''
         danger_is_straight = ((dir_u and game.is_collision(point_u)) or
         (dir_d and game.is_collision(point_d))or
         (dir_l and game.is_collision(point_l))or
@@ -121,7 +116,7 @@ class Agent:
         (dir_d and game.is_collision(point_l))or
         (dir_r and game.is_collision(point_u))or
         (dir_l and game.is_collision(point_d)))
-
+        '''
         # food is left
         if (game.food.x < game.head.x):
             if(dir_l and not game.is_collision(point_l)):
@@ -172,8 +167,6 @@ class Agent:
         if(dir_r and not game.is_collision(point_u)):
             return [0,0,1]        
 
-
-
         return [1,0,0]
 
 def train():
@@ -184,7 +177,7 @@ def train():
     record = 0
     mean_every_n_score = 0
     mean_every_n_score_helper = 0
-    agent = Agent()
+    agent = Agent_Manhattan()
     game = SnakeGameAI()
     while True:
         # Get Old state

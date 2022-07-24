@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum
 
 
-class World:
+class Snake_World_Env:
     game = SnakeGameAI()
     def __init__(self):
         self.reset()        
@@ -81,7 +81,15 @@ class World:
         else:
             next_idx = (idx - 1) % 4
             new_dir = clock_wise[next_idx] # Left Turn
-        return self.game.play_step(new_dir)
+
+        ate_apple, done, score = self.game.play_step(new_dir)
+        
+        # calculate reward
+        reward = 0
+        if (ate_apple):
+            reward += 1
+
+        return reward, done, score
     
     def reset(self):
         self.game.reset()

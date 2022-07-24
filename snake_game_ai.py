@@ -4,17 +4,18 @@ from enum import Enum
 from collections import namedtuple
 import numpy as np
 import math
+import parameters
 pygame.init()
 
 #font = pygame.font.Font('arial.ttf',25)
 font = pygame.font.SysFont('arial.ttf',25)
 
 # Reset 
-# Reward
 # Play(action) -> Direction
 # Game_Iteration
 # is_collision
 
+params = parameters.init_parameters()
 
 class Direction(Enum):
     RIGHT = 1
@@ -79,28 +80,28 @@ class SnakeGameAI:
         self.snake.insert(0,self.head)
 
         # 3. Check if game Over
-        reward = 0  # eat food: +10 , game over: -10 , else: 0
+        ate_apple = False
         game_over = False 
         if(self.is_collision() or self.frame_iteration > 100*len(self.snake) ):
             game_over=True
-            reward = -10
-            return reward,game_over,self.score
+            return ate_apple, game_over,self.score
         # 4. Place new Food or just move
         if(self.head == self.food):
             self.score+=1
-            reward=10
+            ate_apple=True
             self._place__food()
             
         else:
             self.snake.pop()
         
         #5. Update UI and clock
-        self._update_ui()
-        self.clock.tick(SPEED)
+        if(params['show_gui']):
+            self._update_ui()
+            self.clock.tick(SPEED)
         
         #6. Return game Over and Display Score
         
-        return reward,game_over,self.score
+        return ate_apple,game_over,self.score
 
     def _update_ui(self):
         self.display.fill(BLACK)
