@@ -14,28 +14,8 @@ import argparse
 import os
 
 import Snake
+import parameters
 
-# ------------------------------ Configurations -------------------------------
-parser = argparse.ArgumentParser()
-
-# training parameters
-parser.add_argument('--gamma', type=float, default=0.99, help="discount factor")
-parser.add_argument('--lr', type=float, default=0.0001, help="learning rate")
-parser.add_argument('--betas', type=tuple, default=(0.9, 0.999), help="beta factor")
-parser.add_argument('--n_latent_var', type=int, default=8, help="number of variables in hidden layer")
-parser.add_argument('--update_timestep', type=int, default=33, help="update policy every n timesteps")
-parser.add_argument('--K_epochs', type=int, default=80, help="update policy for K epochs")
-parser.add_argument('--eps_clip', type=float, default=0.2, help="clip parameter for PPO")
-parser.add_argument('--random_seed', type=int, default=2021, help="number of random seeding")
-
-# evaluation
-parser.add_argument('--solved_reward', type=int, default=1000000, help="save the policy if avg_reward > solved_reward")
-parser.add_argument('--log_interval', type=int, default=1, help="print avg reward in the interval")
-parser.add_argument('--max_episodes', type=int, default=100, help="max training episodes")
-parser.add_argument('--max_timesteps', type=int, default=500000000, help="max timesteps in one episode")
-parser.add_argument('--render', type=bool, default=False, help="render")
-
-args = parser.parse_args()
 
 '''
 # policy folders
@@ -105,6 +85,17 @@ class ActorCritic(nn.Module):
 
         # actor
         self.action_layer = nn.Sequential(
+            nn.Linear(state_dim, 200),
+            nn.Tanh(),
+            nn.Linear(200, 20),
+            nn.Tanh(),
+            nn.Linear(20, 50),
+            nn.Tanh(),
+            nn.Linear(50, action_dim),
+            nn.Softmax(dim=-1)
+        )
+
+        '''
             nn.Linear(state_dim, n_latent_var),
             nn.Tanh(),
             nn.Linear(n_latent_var, n_latent_var),
@@ -115,19 +106,17 @@ class ActorCritic(nn.Module):
             nn.Tanh(),
             nn.Linear(n_latent_var, action_dim),
             nn.Softmax(dim=-1)
-        )
+        '''
 
         # critic
         self.value_layer = nn.Sequential(
-            nn.Linear(state_dim, n_latent_var),
+            nn.Linear(state_dim, 200),
             nn.Tanh(),
-            nn.Linear(n_latent_var, n_latent_var),
+            nn.Linear(200, 20),
             nn.Tanh(),
-            nn.Linear(n_latent_var, n_latent_var),
+            nn.Linear(20, 50),
             nn.Tanh(),
-            nn.Linear(n_latent_var, n_latent_var),
-            nn.Tanh(),
-            nn.Linear(n_latent_var, 1)
+            nn.Linear(50, 1)
         )
 
     def forward(self):
@@ -183,6 +172,8 @@ class PPO:
                  state_dim, action_dim, n_latent_var, lr,
                  betas, gamma, K_epochs, eps_clip
                  ):
+        self.params = parameters.init_parameters()
+
         self.lr = lr
         self.betas = betas
         self.gamma = gamma
@@ -233,7 +224,7 @@ class PPO:
         old_logprobs = torch.stack(memory.logprobs).to(device).detach()
 
         # Optimize policy for K epochs:
-        for _ in range(self.K_epochs):
+        for _ in range(self.params['k_epochs']):
             # Evaluating old actions and values :
             logprobs, state_values, dist_entropy = self.policy.evaluate(
                 old_states, old_actions)
@@ -258,139 +249,105 @@ class PPO:
         self.policy_old.load_state_dict(self.policy.state_dict())
 
 
-# -------------------------------- train loop ---------------------------------
-def main():
-    """
-    Main train loop. 
-    """
-    
-    env_name = 'snake-v0'
-    env = gym.make(env_name)
-
-    #env.make_window()
-    state_dim = env.observation_space.shape[0]          # state space dimention
-    print(state_dim)
-    action_dim = env.action_space.n           # agent's action space dimention
-    print(action_dim)
-
-    # Load Model
-    memory = Memory()
-    ppo = PPO(state_dim, action_dim, args.n_latent_var,
-              args.lr, args.betas, args.gamma, args.K_epochs, args.eps_clip)
-    print(args.lr, args.betas)
-
-    # log files
-    log_dir = "PPO_logs"
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-
-    log_dir = log_dir + '/' + env_name + '/'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-
-    # get number of log files in log directory
-    run_num = 0
-    current_num_files = next(os.walk(log_dir))[2]
-    run_num = len(current_num_files)
-
-    # create new log file for each run
-    log_f_name = log_dir + '/PPO_' + env_name + "_log_" + str(run_num) + ".csv"
-    print("current logging run number for " + env_name + " : ", run_num)
-    print("logging at : " + log_f_name)
-
-    # logging file
-    log_f = open(log_f_name, "w+")
-    log_f.write('episode,timestep,reward\n')
-
-    # logging variables
-    running_score = 0
-    avg_length = 0
-    timestep = 0
-    rewardList = []
-
-    # train loop
-    for i_episode in range(1, args.max_episodes+1):
-        state = env.reset()
-        
-        for t in range(args.max_timesteps):
-            timestep += 1
-
-            # Running policy_old:
-            action_index = ppo.policy_old.act(state, memory)
-            action = [0,0,0]
-            action[action_index]=1
-            print(action)
-            state, reward, done, info = env.step(action)
-            print(state, reward, done, info)
-
-            # Saving reward and is_terminal:
-            memory.rewards.append(reward)
-            memory.is_terminals.append(done)
-
-            # update if its time
-            if timestep % args.update_timestep == 0:
-                ppo.update(memory)
-                memory.clear_memory()
-                timestep = 0
-
-            running_score += reward
-            if args.render:
-                env.render()
-            if done:
-                break
-
-        avg_length += t
-        rewardList.append(running_score)
-        #precision.append(correct_deliveries/total_deliveries)
-
-        # save every 100 episodes
-        '''if i_episode % 100 == 0:
-            pre_name = f'100_switchsteering{i_episode}'
-            torch.save(ppo.policy.state_dict(), os.path.join(
-                folder_name, f'{pre_name}.pth'))'''
-
-        # save the policy if avg_reward > solved_reward
-        if running_score >= (args.log_interval*args.solved_reward):
-            pre_name = f'Solved_switchsteering{i_episode}_{running_score}'
-            torch.save(ppo.policy.state_dict(), os.path.join(f'{pre_name}.pth'))
-            # break
-
-        # logging
-        if i_episode % args.log_interval == 0:
-
-            print('Episode {} \t reward: {}'.format(i_episode, running_score))
-
-            # log in logging file
-            log_f.write('{},{},{}\n'.format(
-                i_episode, avg_length, running_score))
-            log_f.flush()
-
-            running_score = 0
-
-
-        # stop training if i_episode >= max_episodes/ plot results
-        if i_episode >= args.max_episodes:
-            print("####### END #######")
-            pre_name = f'Solved_switchsteering{i_episode}_{running_score}'
-
-            plt.plot(running_score, label='PPO')
-            plt.ylabel('Precision')
-            plt.xlabel('Episode')
-            plt.legend(loc=0)
-            plt.show()
-            torch.save(ppo.policy.state_dict(), os.path.join(
-                folder_name2, f'{pre_name}.pth'))
-            break
-
 
 class Agent_PPO:
-    def train_step(self, world_env, counter_games):
-        if(done):
-            world_env.reset()
-            
-        return reward, done, score
+    def __init__(self, is_training_run):
+        
+
+        self.params = parameters.init_parameters()
+
+        env_name = 'snake-v0'
+        self.env = gym.make(env_name)
+
+        #env.make_window()
+        state_dim = self.env.observation_space.shape[0]          # state space dimention
+        action_dim = self.env.action_space.n           # agent's action space dimention
+
+        # Load Model
+        self.memory = Memory()
+        self.ppo = PPO(state_dim, action_dim, self.params['n_latent_var'] ,
+                self.params['learning_rate'], self.params['betas'], self.params['gamma'], self.params['k_epochs'], self.params['eps_clip'])
+
+        if not is_training_run:
+            trained_model = './saved_models_ppo/model_ppo.pth'
+            print('loaded model: ',trained_model)
+            self.ppo.policy_old.load_state_dict(torch.load(trained_model))
+
+        # not needed logging
+        '''
+        # logging variables
+        running_score = 0
+        avg_length = 0
+        timestep = 0
+        rewardList = []
+
+        # log files
+        log_dir = "PPO_logs"
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        log_dir = log_dir + '/' + env_name + '/'
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        # get number of log files in log directory
+        run_num = 0
+        current_num_files = next(os.walk(log_dir))[2]
+        run_num = len(current_num_files)
+
+        # create new log file for each run
+        log_f_name = log_dir + '/PPO_' + env_name + "_log_" + str(run_num) + ".csv"
+
+        # logging file
+        log_f = open(log_f_name, "w+")
+        log_f.write('episode,timestep,reward\n')
+        '''
 
 
-# TODO Remove
-if __name__ == '__main__':
-    main()
+    def train_step(self, world_env, counter_games, timestep):    
+        # Running policy_old:
+
+        action_index = self.ppo.policy_old.act(self.state, self.memory)
+        action = [0,0,0]
+        action[action_index]=1
+        self.state, reward, done, info = self.env.step(action)
+
+        # Saving reward and is_terminal:
+        self.memory.rewards.append(reward)
+        self.memory.is_terminals.append(done)
+
+        # update if its time
+        if timestep % self.params['ppo_update_timestep'] == 0:
+            self.ppo.update(self.memory)
+            self.memory.clear_memory()
+            timestep = 0
+            model_path = os.path.join('saved_models_ppo', 'model_ppo.pth')
+            torch.save(self.ppo.policy.state_dict(), model_path)
+
+        return reward, done, info['score']
+
+    def test_step(self, world_env, counter_games, timestep):
+        action_index = self.ppo.policy_old.act(self.state, self.memory)
+        action = [0,0,0]
+        action[action_index]=1
+        self.state, reward, done, info = self.env.step(action)
+
+        '''
+        # Saving reward and is_terminal:
+        self.memory.rewards.append(reward)
+        self.memory.is_terminals.append(done)
+
+        # update if its time
+        if timestep % self.params['ppo_update_timestep'] == 0:
+            self.ppo.update(self.memory)
+            self.memory.clear_memory()
+            #timestep = 0
+
+        #if (done):
+            # self.state = self.reset()
+        '''
+        return reward, done, info['score']
+
+
+    def reset(self):
+        self.state = self.env.reset()

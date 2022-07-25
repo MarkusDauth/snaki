@@ -11,22 +11,23 @@ import parameters
 
 
 MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
+# BATCH_SIZE = 1000
 
 class Agent_QLearning:
     def __init__(self):
         self.params = parameters.init_parameters()
-        self.gamma = 0.9 # discount rate
-        self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(11,256,3) 
+        
+        self.gamma = self.params['gamma']
+        self.memory = deque(maxlen=self.params['memory_size']) # popleft()
+        self.model = Linear_QNet(11,200,20,50,3) 
         self.trainer = QTrainer(self.model,lr=self.params['learning_rate'] ,gamma=self.gamma)    
 
     def _remember(self,state,action,reward,next_state,done):
         self.memory.append((state,action,reward,next_state,done)) # popleft if memory exceed
 
     def _train_long_memory(self):
-        if (len(self.memory) > BATCH_SIZE):
-            mini_sample = random.sample(self.memory,BATCH_SIZE)
+        if (len(self.memory) > self.params['batch_size']):
+            mini_sample = random.sample(self.memory,self.params['batch_size'])
         else:
             mini_sample = self.memory
         states,actions,rewards,next_states,dones = zip(*mini_sample)
@@ -58,7 +59,7 @@ class Agent_QLearning:
         final_move[move]=1 
         return final_move
 
-    def train_step(self, world_env, counter_games):
+    def train_step(self, world_env, counter_games, counter_steps):
         # Get Old state
         state_old = world_env.get_state()
 
@@ -82,7 +83,7 @@ class Agent_QLearning:
             
         return reward, done, score
 
-    def test_step(self, world_env):
+    def test_step(self, world_env, counter_games, counter_steps):
         state_old = world_env.get_state()
         final_move = self._get_test_action(state_old)
 
@@ -92,6 +93,9 @@ class Agent_QLearning:
         if(done):
             world_env.reset()
         return reward, done, score
+
+    def reset(self):
+        pass
 
 
 

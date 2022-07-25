@@ -51,9 +51,7 @@ class QTrainer:
             next_state = torch.unsqueeze(next_state,0).cuda()
             action = torch.unsqueeze(action,0).cuda()
             reward = torch.unsqueeze(reward,0).cuda()
-            done = (done, )
-
-           
+            done = (done, )           
 
         # 1. Predicted Q value with current state
         pred = self.model(state).cuda()

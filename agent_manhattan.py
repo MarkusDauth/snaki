@@ -2,7 +2,6 @@ import torch
 import random 
 import numpy as np
 from collections import deque
-from model_qlearning import Linear_QNet,QTrainer
 from snake_game_ai import SnakeGameAI,Direction,Point,BLOCK_SIZE,Direction
 
 # This agent uses the game world directly
@@ -106,10 +105,9 @@ class Agent_Manhattan:
         final_move = self._get_test_action(game)
 
         # perform move and get new state
-        reward, done, score = world_env.play_step(final_move)
-
+        observation, reward, done, info = world_env.step(final_move)
+        score = info['score']
         if(done):
             world_env.reset()
 
-            
         return reward, done, score

@@ -25,7 +25,7 @@ class Direction(Enum):
  
 Point = namedtuple('Point','x , y')
 
-FIELD_SIZE = 10 # must be even and larger than 5
+FIELD_SIZE = params['game_field_size'] # must be even and atleast 6
 
 BLOCK_SIZE=20
 SPEED = 40

@@ -99,10 +99,11 @@ class SnakeEnv(gym.Env):
         reward = 0
         if (ate_apple):
             reward += 1
+        if (done):
+            reward -= 1
 
         observation = self.get_state()
         
-        #TODO: info
         info = {'score':score}
         return observation, reward, done, info
     
