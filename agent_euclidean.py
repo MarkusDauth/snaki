@@ -6,7 +6,7 @@ from snake_game_ai import SnakeGameAI,Direction,Point,BLOCK_SIZE,Direction
 
 # This agent uses the game world directly
 
-class Agent_Manhattan:
+class Agent_Euclidean:
     def __init__(self):
         pass
 
@@ -96,7 +96,7 @@ class Agent_Manhattan:
         return [1,0,0]
 
 
-    def test_step(self, world_env):
+    def test_step(self, world_env, counter_games, counter_steps):
         # Get Old state
         # state = world_env.get_state()
         game = world_env.get_game()

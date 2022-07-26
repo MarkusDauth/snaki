@@ -1,5 +1,5 @@
 from Snake.envs.snake_env import SnakeEnv
-from agent_manhattan import Agent_Manhattan
+from agent_euclidean import Agent_Euclidean
 from agent_sarsa_ql import Agent_Sarsa_Ql
 import parameters
 import time
@@ -27,12 +27,12 @@ class Training_Setup:
             self.agent.optimizer = optim.Adam(self.agent.parameters(), weight_decay=0, lr=self.params['learning_rate'])
         elif(self.params['method'] == 'ppo'):
             self.agent = Agent_PPO(self.params['train'])
-        elif(self.params['method'] == 'manhattan'):
+        elif(self.params['method'] == 'euclidean'):
             if (self.params['train']):
-                print('error: manhattan can not be trained')
+                print('error: euclidean can not be trained')
                 sys.exit()
             else:
-                self.agent = Agent_Manhattan()
+                self.agent = Agent_Euclidean()
         else:
             print('wrong parameter: method')
             sys.exit()
@@ -60,7 +60,7 @@ class Training_Setup:
             print('Starting TESTING with '+self.params["method"])
             max_episodes = self.params['test_episodes']
 
-        if(self.params['method'] != "manhattan"):
+        if(self.params['method'] != "euclidean"):
             self.agent.reset()
         while (self.counter_games < max_episodes):
             # Episode start
@@ -74,7 +74,9 @@ class Training_Setup:
             self.total_steps += 1
             if (done):
                 # episode done
-                if(self.params['method'] != "manhattan"):
+
+                # reset env for RL algorithms
+                if(self.params['method'] != "euclidean"):
                     self.agent.reset()
 
                 self.counter_games += 1

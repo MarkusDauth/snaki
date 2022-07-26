@@ -252,8 +252,7 @@ class PPO:
 
 class Agent_PPO:
     def __init__(self, is_training_run):
-        
-
+    
         self.params = parameters.init_parameters()
 
         env_name = 'snake-v0'
@@ -272,6 +271,7 @@ class Agent_PPO:
             trained_model = './saved_models_ppo/model_ppo.pth'
             print('loaded model: ',trained_model)
             self.ppo.policy_old.load_state_dict(torch.load(trained_model))
+            #self.ppo.policy.load_state_dict(torch.load(trained_model))
 
         # not needed logging
         '''
@@ -341,10 +341,9 @@ class Agent_PPO:
         if timestep % self.params['ppo_update_timestep'] == 0:
             self.ppo.update(self.memory)
             self.memory.clear_memory()
-            #timestep = 0
-
-        #if (done):
-            # self.state = self.reset()
+            timestep = 0
+            model_path = os.path.join('saved_models_ppo', 'model_ppo.pth')
+            torch.save(self.ppo.policy.state_dict(), model_path)
         '''
         return reward, done, info['score']
 

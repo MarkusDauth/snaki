@@ -15,7 +15,7 @@ class SnakeEnv(gym.Env):
         self.action_space = spaces.Discrete(3)
 
     def get_game(self):
-        'this is needed for manhattan'
+        'this is needed for euclidean'
         return self.game
 
     # state (11 Values)
