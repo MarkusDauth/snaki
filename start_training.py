@@ -53,6 +53,11 @@ class Training_Setup:
         world_env = SnakeEnv()
         start_time = time.time()
 
+        # logging
+        log_f_name = f'./logs/log_{self.params["method"]}.csv'
+        log_f = open(log_f_name, "w+")
+        log_f.write('episode,score,reward,avg_score,total_steps,time\n')
+
         if(self.params['train']):
             print('Starting TRAINING with '+self.params["method"])
             max_episodes = self.params['train_episodes']
@@ -88,7 +93,7 @@ class Training_Setup:
                 
                 plot_scores.append(score)
                 total_score+=score
-                mean_score = total_score / self.counter_games
+                avg_score = total_score / self.counter_games
                 
                 
                 # mean every 20 games - this is running average
@@ -97,13 +102,21 @@ class Training_Setup:
                     mean_every_n_score = mean_every_n_score_helper / 20
                     mean_every_n_score_helper = 0
                 plot_mean_every_n_scores.append(mean_every_n_score)
-                plot_mean_scores.append(mean_score)
+                plot_mean_scores.append(avg_score)
                 
                 episode_end_time = time.time()
                 episode_run_time = episode_end_time - start_time
 
-                print(f'Game: {self.counter_games}\tScore: {score}\treward: {episode_reward}\tavg_score: {mean_score:.4f}\trunning_avg: {mean_every_n_score:.4f}\tRecord: {record}\ttotal_steps: {self.total_steps}\ttime: {episode_run_time:.2f}')
+                #logging
+                print(f'Game: {self.counter_games}\tScore: {score}\treward: {episode_reward}\tavg_score: {avg_score:.4f}\trunning_avg: {mean_every_n_score:.4f}\tRecord: {record}\ttotal_steps: {self.total_steps}\ttime: {episode_run_time:.2f}')
+                'episode,score,reward,avg_score,total_steps,time\n'
+                log_f.write('{},{},{},{},{},{}\n'.format(self.counter_games, score, episode_reward, avg_score, self.total_steps, episode_run_time) )
+                log_f.flush()
+
+                #reset for episode
                 episode_reward = 0
+                
+
 
         # done training
         self.plot(plot_scores,plot_mean_scores,plot_mean_every_n_scores)

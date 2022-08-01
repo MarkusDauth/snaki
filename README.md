@@ -23,10 +23,13 @@ This repository is based on the code from https://github.com/vedantgoswami/Snake
     pip install stable-baselines3
     pip install -e ./envs
 
+
 # How to run
 Run the agent.py file in the environment just created and then the training will start, and you will see the following two GUI one for the training progress and the other for the snake game driven by AI.
 
 After achieving certain score you can quit the game and the model that you just trained will be stored in the path that you had defined in the save function of models.py.
+
+(optional): the game can be manually played with the "snake_game_manual.py" script.
 
 
 
