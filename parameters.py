@@ -3,9 +3,13 @@ def init_parameters():
 
     # Training and test
     params['method'] = 'ppo' # 'qlearning' | 'sarsa' | 'ppo' | 'euclidean'
-    params['train'] = True #   false = test run, which does not change NN   
+    params['train'] = True #   false = test run, which does not change the neural network   
     params['show_gui'] = False # disabling the GUI improves training speed
     params['device'] = 'cuda' # 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    # test settings
+    params['test_episodes'] = 1000 # number of episodes for test run
+
 
     # game settings
     params['game_field_size'] = 6 # must be even and atleast 6
@@ -28,8 +32,6 @@ def init_parameters():
     params['batch_size'] = 32 # original was 1000
     params['memory_size'] = 2000 # original was 2500
 
-    # test settings
-    params['test_episodes'] = 1000 # number of episodes for test run
 
 
     return params
